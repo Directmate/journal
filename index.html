@@ -1,326 +1,871 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trading Journal</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0 auto;
-      max-width: 900px;
-      background: #f0f4f8;
-      color: #222;
-      padding: 1em 1em 3em 1em;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Advanced Pizza Shop POS</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+  header {
+    background: #e74c3c; color: white; padding: 1em; text-align: center;
+    position: relative;
+  }
+  #shopName {
+    font-size: 1.6rem; font-weight: bold;
+  }
+  nav {
+    background: #34495e; padding: 0.5em; text-align: center;
+  }
+  nav button {
+    background: #2980b9; color: white; border: none; margin: 0 0.3em;
+    padding: 0.6em 1.1em; border-radius: 4px; cursor: pointer;
+    font-size: 1rem;
+  }
+  nav button:disabled {
+    background: #95a5a6; cursor: default;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 1em auto;
+    background: white;
+    border-radius: 8px;
+    padding: 1em;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+  }
+  section { display: none; }
+  section.active { display: block; }
+  h2 {
+    border-bottom: 2px solid #e74c3c;
+    margin-bottom: 0.6em;
+    padding-bottom: 0.2em;
+  }
+  input, select, button {
+    font-size: 1rem;
+  }
+  input[type=text], input[type=number], select {
+    width: 100%;
+    padding: 0.5em;
+    margin: 0.3em 0.6em 1em 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .menu-item, .order-item, .inventory-item, .kitchen-ticket {
+    border-bottom: 1px solid #eee;
+    padding: 0.5em 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .menu-item input[type=text], .menu-item input[type=number] {
+    width: auto;
+    margin-right: 10px;
+  }
+  button.edit-btn, button.save-btn, button.remove-btn, button.ready-btn {
+    margin-left: 0.6em;
+    padding: 0.3em 0.8em;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+  }
+  button.edit-btn { background: #2980b9; color: white; }
+  button.save-btn { background: #27ae60; color: white; }
+  button.remove-btn { background: #c0392b; color: white; }
+  button.ready-btn { background: #27ae60; color: white; }
+  ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  .order-list, .inventory-list, #kitchenTicketsList, #completedOrdersList {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1em;
+  }
+  .low-stock {
+    color: red;
+    font-weight: bold;
+  }
+  label {
+    font-weight: bold;
+    margin-right: 0.5em;
+  }
+  .login-container {
+    max-width: 350px;
+    margin: 4em auto;
+    padding: 2em;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+  }
+  .login-container h2 {
+    margin-bottom: 1em;
+  }
+  .role-badge {
+    font-weight: 700;
+    background: #16a085;
+    color: white;
+    border-radius: 12px;
+    padding: 0 8px;
+    margin-left: 1em;
+    font-size: 0.9rem;
+  }
+  .logbtn {
+    background: #e67e22;
+    color: white;
+    border: none;
+    padding: 0.7em 1.3em;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .bottom-info {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 2em;
+    text-align: center;
+  }
+  @media (max-width: 800px) {
+    nav button {
+      margin: 0.3em 0.1em;
+      padding: 0.5em 0.6em;
+      font-size: 0.9rem;
     }
-    h1 {
-      color: #2c3e50;
-      text-align: center;
-      margin-bottom: 1rem;
-      font-size: 1.9rem;
+    .container {
+      margin: 0.5em;
+      padding: 1em 0.6em;
     }
-    #printBtn {
-      margin: 0 auto 1.5em auto;
-      display: block;
-      max-width: 220px;
-      font-size: 1em;
-      background: #2c3e50;
-      color: #fff;
-      border: none;
-      padding: 0.6em 1em;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.22s;
-    }
-    #printBtn:hover { background: #174e79; }
-
-    form {
-      background: #fff;
-      padding: 1em 1.2em;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(44,62,80,.09);
-      margin-bottom: 2em;
-    }
-    form label {
-      display: block;
-      margin-top: 0.9em;
-      font-weight: 600;
-      font-size: 1rem;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 0.55em;
-      margin-top: 0.2em;
-      border-radius: 4px;
-      border: 1px solid #ccd6dd;
-      font-size: 1rem;
-    }
-    textarea { resize: vertical; min-height: 60px; }
-    button[type="submit"] {
-      margin-top: 1.1em;
-      background: #2980b9;
-      color: white;
-      border: none;
-      padding: 0.75em 1.2em;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 1rem;
-      min-width: 120px;
-      transition: background-color 0.3s ease;
-      display: block;
-      width: 100%;
-    }
-    button[type="submit"]:hover { background: #1c5980; }
-    .summary {
-      background: #fff;
-      padding: 1em 1.2em;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(41,128,185,0.15);
-      margin-bottom: 2em;
-      font-size: 1.08rem;
-      text-align: center;
-    }
-    .summary b { font-weight: 800; }
-
-    .table-responsive { width: 100%; overflow-x: auto; }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      background: #fff;
-      border-radius: 8px;
-      margin: 0;
-      font-size: 0.97rem;
-      box-shadow: 0 3px 12px rgba(44,62,80,0.08);
-      overflow: hidden;
-    }
-    thead { background: #2980b9; color: white; }
-    th, td {
-      padding: 0.65em 0.5em;
-      min-width: 80px;
-      text-align: center;
-      border-bottom: 1px solid #e1e8ed;
-      vertical-align: middle;
-      font-size: 0.98em;
-      word-break: break-word;
-    }
-    tbody tr:hover { background-color: #eef6fb; }
-    .delete-btn {
-      background: #e74c3c;
-      border: none;
-      color: white;
-      padding: 0.3em 0.7em;
-      font-size: 0.89rem;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .delete-btn:hover { background: #c0392b; }
-    #equityChart {
-      display: block;
-      margin: 1.2em auto;
-      max-width: 100%;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(41,128,185,0.13);
-      background: #fff;
-    }
-    @media (max-width: 700px) {
-      body { padding: 0.5em 0.2em 2em 0.2em; }
-      h1 { font-size: 1.4rem; }
-      .summary, form { padding: 0.9em 0.5em; }
-      .table-responsive { padding-bottom: 1em; }
-      th, td { font-size: 0.93em; padding: 0.42em 0.2em; }
-      #equityChart { margin: 1.1em 0; }
-      form label {
-        font-size: 0.96rem;
-        margin-top: 0.7em;
-      }
-      button[type="submit"] { font-size: 0.96rem; padding: 0.71em 1em; }
-    }
-    @media (max-width: 500px) {
-      table, thead, tbody, th, td, tr { display: block; }
-      thead { display: none; }
-      table tbody { width: 100%; }
-      tr { margin-bottom: 1.3em; background: #fff; border-radius: 6px; box-shadow: 0 1px 6px rgba(44,62,80,0.04);}
-      td {
-        text-align: right;
-        padding-left: 50%;
-        position: relative;
-        min-height: 32px;
-        border: none;
-        border-bottom: 1px solid #f1f1f1;
-        font-size: 1em;
-      }
-      td:before {
-        position: absolute;
-        left: 0.6em;
-        top: 50%;
-        transform: translateY(-50%);
-        white-space: nowrap;
-        font-weight: 600;
-        text-align: left;
-        font-size: 0.92em;
-        color: #2980b9;
-        content: attr(data-label);
-      }
-      .delete-btn { width: 100%; margin-top: 6px; }
-    }
-    @media print {
-      body { background: #fff; color: #222; max-width: none; padding: 0; }
-      #printBtn, form, #equityChart, .delete-btn, .summary { display: none !important; }
-      table { box-shadow: none; border: 1px solid #bbb; }
-      th, td { color: #111; font-size: 12pt; }
-      tr { page-break-inside: avoid; }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
-  <h1>Stock Trading Journal</h1>
-  <button id="printBtn">🖨️ Print Journal</button>
 
-  <form id="tradeForm">
-    <label>Date/Time:<input type="datetime-local" name="date" required></label>
-    <label>Ticker:<input type="text" name="ticker" required></label>
-    <label>Buy/Sell:
-      <select name="side">
-        <option>Buy</option>
-        <option>Sell</option>
-      </select>
-    </label>
-    <label>Entry Price:<input type="number" name="entry" required step="0.01"></label>
-    <label>Exit Price:<input type="number" name="exit" required step="0.01"></label>
-    <label>Quantity:<input type="number" name="qty" required step="1"></label>
-    <label>Market Context:<input type="text" name="context"></label>
-    <label>Notes:<textarea name="notes"></textarea></label>
-    <button type="submit">Add Trade</button>
-  </form>
-
-  <div class="summary" id="stats"></div>
-
-  <div class="table-responsive">
-    <table id="tradeTable">
-      <thead>
-        <tr>
-          <th>Date/Time</th>
-          <th>Ticker</th>
-          <th>Side</th>
-          <th>Entry</th>
-          <th>Exit</th>
-          <th>Qty</th>
-          <th>P/L</th>
-          <th>Context</th>
-          <th>Notes</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+<!-- Login screen -->
+<div id="loginScreen" class="login-container" aria-label="Login form">
+  <h2>POS System Login</h2>
+  <label for="loginUser">Username</label><br />
+  <input type="text" id="loginUser" autocomplete="username" aria-required="true" /><br />
+  <label for="loginPass">Password</label><br />
+  <input type="password" id="loginPass" autocomplete="current-password" aria-required="true" /><br />
+  <button class="logbtn" onclick="handleLogin()">Login</button>
+  <div class="bottom-info">
+    <p><strong>Users (for demo):</strong></p>
+    <p>Admin: <code>admin</code> / <code>admin123</code></p>
+    <p>Cashier: <code>cashier</code> / <code>cashier123</code></p>
+    <p>Kitchen: <code>kitchen</code> / <code>kitchen123</code></p>
   </div>
+</div>
 
-  <canvas id="equityChart" height="250"></canvas>
+<!-- POS App -->
+<div id="posApp" style="display:none;" aria-label="Point of Sale Application">
 
-  <script>
-    // Print Button Functionality
-    document.getElementById("printBtn").onclick = function() {
-      window.print();
+  <header role="banner" aria-live="polite">
+    <div>
+      <span id="shopName" tabindex="0">Pizza & Fast Food POS</span>
+      <span id="userRoleBadge" class="role-badge" aria-label="User role"></span>
+    </div>
+    <button aria-label="Logout" style="position:absolute; right:15px; top:15px; background:#c0392b; border:none; color:white; padding:0.5em 1em; border-radius:4px; cursor:pointer;" onclick="logout()">Logout</button>
+  </header>
+
+  <nav role="navigation" aria-label="Primary menu">
+    <button id="btnMenu" onclick="showSection('menuSection')">Menu</button>
+    <button id="btnOrders" onclick="showSection('orderSection')">New Order</button>
+    <button id="btnInventory" onclick="showSection('inventorySection')">Inventory</button>
+    <button id="btnKitchen" onclick="showSection('kitchenSection')">Kitchen</button>
+    <button id="btnCompleted" onclick="showSection('completedSection')">Completed Orders</button>
+    <button id="btnReports" onclick="showSection('reportsSection')">Reports</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- Menu Section -->
+    <section id="menuSection" class="active" aria-label="Menu management section">
+      <h2>Menu - Edit Items</h2>
+      <ul id="menuList" class="inventory-list" tabindex="0"></ul>
+      <p><em>Note: Use Inventory for Stock and Item Availability</em></p>
+    </section>
+
+    <!-- Order Section -->
+    <section id="orderSection" aria-label="New order section" style="display:none;">
+      <h2>New Order</h2>
+
+      <form id="orderForm" onsubmit="return false;" aria-label="Order form">
+        <label for="custName">Customer Name *</label>
+        <input type="text" id="custName" placeholder="Customer name" required autocomplete="name" aria-required="true" />
+        <label for="custPhone">Mobile Number *</label>
+        <input type="text" id="custPhone" placeholder="Mobile (digits only)" pattern="\\d+" required autocomplete="tel" maxlength="15" aria-required="true"/>
+        <label for="orderType">Order Type</label>
+        <select id="orderType" onchange="toggleDeliveryAddress()" aria-label="Select order type">
+          <option value="dine-in">Dine-in</option>
+          <option value="takeaway">Takeaway</option>
+          <option value="delivery">Delivery</option>
+        </select>
+        <div id="deliveryAddressDiv" style="display:none;">
+          <label for="deliveryAddress">Delivery Address *</label>
+          <input type="text" id="deliveryAddress" placeholder="Enter delivery address" aria-required="true" />
+        </div>
+
+        <h3>Items</h3>
+        <ul id="orderItemsList" class="order-list" aria-live="polite" aria-relevant="additions"></ul>
+
+        <p><strong>Total: $<span id="orderTotal">0.00</span></strong></p>
+
+        <div style="margin-bottom:1em;">
+          <select id="addItemSelect" aria-label="Add item to order"></select>
+          <button onclick="addSelectedItemToOrder()" style="margin-left:0.6em;" type="button">Add Item</button>
+        </div>
+
+        <button onclick="payOrder()" type="button">Pay & Send to Kitchen</button> &nbsp;
+        <button onclick="printBill()" type="button">Print Bill</button>
+      </form>
+    </section>
+
+    <!-- Inventory Section -->
+    <section id="inventorySection" aria-label="Inventory management section" style="display:none;">
+      <h2>Inventory / Menu Management</h2>
+      <form id="addMenuItemForm" onsubmit="addNewMenuItem(event)">
+        <input type="text" id="newItemName" placeholder="Item name" required aria-required="true" />
+        <input type="number" step="0.01" min="0" id="newItemPrice" placeholder="Price ($)" required aria-required="true" />
+        <input type="number" step="1" min="0" id="newItemStock" placeholder="Stock quantity" required aria-required="true" />
+        <label><input type="checkbox" id="newItemActive" checked /> Active</label>
+        <button type="submit">Add Item</button>
+      </form>
+      <ul id="inventoryList" class="inventory-list" tabindex="0"></ul>
+    </section>
+
+    <!-- Kitchen Section -->
+    <section id="kitchenSection" aria-label="Kitchen tickets section" style="display:none;">
+      <h2>Kitchen Tickets</h2>
+      <div>
+        <label>Filter Orders:
+          <select id="orderFilter" onchange="renderKitchenTickets()" aria-label="Filter kitchen tickets">
+            <option value="not-ready" selected>Not Ready</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+      </div>
+      <div id="kitchenTicketsList" class="inventory-list" tabindex="0"></div>
+    </section>
+
+    <!-- Completed Orders Section -->
+    <section id="completedSection" aria-label="Completed orders section" style="display:none;">
+      <h2>Completed Orders</h2>
+      <div id="completedOrdersList" class="inventory-list" tabindex="0"></div>
+      <button onclick="clearCompletedOrders()" type="button" style="background:#c0392b; color:white; border:none; padding:0.5em 1em; border-radius:4px; cursor:pointer;">Clear Completed Orders</button>
+    </section>
+
+    <!-- Reports Section -->
+    <section id="reportsSection" aria-label="Sales reports section" style="display:none;">
+      <h2>Sales Reports</h2>
+      <p><em>Summary of sales for today:</em></p>
+      <div id="reportContent" tabindex="0"></div>
+      <button onclick="exportReportCSV()" type="button">Export CSV</button>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---------------------------
+// Data and State Management
+// ---------------------------
+
+const USERS = [
+  {username: 'admin', password: 'admin123', role: 'admin'},
+  {username: 'cashier', password: 'cashier123', role: 'cashier'},
+  {username: 'kitchen', password: 'kitchen123', role: 'kitchen'},
+];
+
+let currentUser = null;
+let menu = [];
+let orders = [];
+let orderIdCounter = 1000;
+
+// Load data from localStorage or initialize
+function loadData() {
+  menu = JSON.parse(localStorage.getItem('menuData')) || [
+    {id: 1, name: "Margherita Pizza", price: 8.5, stock: 10, active: true},
+    {id: 2, name: "Pepperoni Pizza", price: 10.0, stock: 8, active: true},
+    {id: 3, name: "Veggie Pizza", price: 9.0, stock: 5, active: true},
+    {id: 4, name: "Cheese Burger", price: 7.5, stock: 15, active: true},
+    {id: 5, name: "Fries", price: 3.0, stock: 20, active: true},
+    {id: 6, name: "Coke", price: 2.0, stock: 30, active: true}
+  ];
+  orders = JSON.parse(localStorage.getItem('orderHistory')) || [];
+  orderIdCounter = parseInt(localStorage.getItem('orderIdCounter')) || 1000;
+}
+
+function saveData() {
+  localStorage.setItem('menuData', JSON.stringify(menu));
+  localStorage.setItem('orderHistory', JSON.stringify(orders));
+  localStorage.setItem('orderIdCounter', orderIdCounter.toString());
+}
+
+function generateOrderId() {
+  orderIdCounter++;
+  localStorage.setItem('orderIdCounter', orderIdCounter.toString());
+  return orderIdCounter;
+}
+
+// ---------------------------
+// Login and Access Control
+// ---------------------------
+
+function handleLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const user = USERS.find(u => u.username === username && u.password === password);
+  if (!user) {
+    alert('Invalid username or password');
+    return;
+  }
+  currentUser = user;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('posApp').style.display = 'block';
+  document.getElementById('userRoleBadge').textContent = currentUser.role.toUpperCase();
+
+  // Show/hide nav buttons based on role
+  document.getElementById('btnMenu').disabled = !(currentUser.role === 'admin' || currentUser.role === 'cashier');
+  document.getElementById('btnOrders').disabled = !(currentUser.role === 'admin' || currentUser.role === 'cashier');
+  document.getElementById('btnInventory').disabled = (currentUser.role !== 'admin');
+  document.getElementById('btnKitchen').disabled = !(currentUser.role === 'kitchen' || currentUser.role === 'admin');
+  document.getElementById('btnCompleted').disabled = !(currentUser.role === 'kitchen' || currentUser.role === 'admin');
+  document.getElementById('btnReports').disabled = (currentUser.role !== 'admin');
+
+  if (currentUser.role === 'cashier') showSection('orderSection');
+  else if (currentUser.role === 'kitchen') showSection('kitchenSection');
+  else showSection('menuSection');
+
+  renderMenuList();
+  renderInventoryList();
+  populateAddItemSelect();
+  renderKitchenTickets();
+  renderCompletedOrders();
+  renderReports();
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById('posApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'block';
+  clearOrderInput();
+}
+
+// ---------------------------
+// Section Navigation
+// ---------------------------
+
+function showSection(sectionId) {
+  const sections = ['menuSection', 'orderSection', 'inventorySection', 'kitchenSection', 'completedSection', 'reportsSection'];
+  sections.forEach(s => {
+    document.getElementById(s).style.display = (s === sectionId) ? 'block' : 'none';
+  });
+  setTimeout(() => {
+    const heading = document.querySelector('#' + sectionId + ' h2');
+    if (heading) heading.focus();
+  }, 100);
+}
+
+// ---------------------------
+// Menu Section (Edit Items)
+// ---------------------------
+
+function renderMenuList() {
+  const ul = document.getElementById('menuList');
+  ul.innerHTML = '';
+  menu.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'inventory-item';
+    li.setAttribute('data-id', item.id);
+
+    li.innerHTML = `
+      <input type="text" value="${item.name}" aria-label="Item name" disabled />
+      <input type="number" min="0" step="0.01" value="${item.price.toFixed(2)}" aria-label="Item price" disabled />
+      <input type="number" min="0" step="1" value="${item.stock}" aria-label="Item stock" disabled />
+      <label>
+        <input type="checkbox" ${item.active ? 'checked' : ''} disabled aria-label="Active status" />
+        Active
+      </label>
+      <button class="edit-btn" aria-label="Edit item ${item.name}">Edit</button>
+      <button class="save-btn" style="display:none;" aria-label="Save item ${item.name}">Save</button>
+      <button class="remove-btn" aria-label="Remove item ${item.name}">Remove</button>
+    `;
+    ul.appendChild(li);
+
+    const editBtn = li.querySelector('.edit-btn');
+    const saveBtn = li.querySelector('.save-btn');
+    const removeBtn = li.querySelector('.remove-btn');
+    const inputs = li.querySelectorAll('input');
+
+    editBtn.onclick = () => {
+      inputs.forEach(inp => inp.disabled = false);
+      editBtn.style.display = 'none';
+      saveBtn.style.display = 'inline-block';
     };
+    saveBtn.onclick = () => {
+      const newName = inputs[0].value.trim();
+      const newPrice = parseFloat(inputs[1].value);
+      const newStock = parseInt(inputs[2].value);
+      const newActive = inputs[3].checked;
 
-    let trades = JSON.parse(localStorage.getItem("trades") || "[]");
+      if (!newName || isNaN(newPrice) || newPrice < 0 || isNaN(newStock) || newStock < 0) {
+        alert('Please enter valid name, price, and stock.');
+        return;
+      }
 
-    function saveTrades() {
-      localStorage.setItem("trades", JSON.stringify(trades));
+      const itemId = item.id;
+      const menuItem = menu.find(m => m.id === itemId);
+      if (menuItem) {
+        menuItem.name = newName;
+        menuItem.price = newPrice;
+        menuItem.stock = newStock;
+        menuItem.active = newActive;
+        saveData();
+        renderMenuList();
+        populateAddItemSelect();
+        alert(`Item "${newName}" updated.`);
+      }
+    };
+    removeBtn.onclick = () => {
+      if (confirm(`Remove item "${item.name}"? This cannot be undone.`)) {
+        menu = menu.filter(m => m.id !== item.id);
+        saveData();
+        renderMenuList();
+        populateAddItemSelect();
+      }
+    };
+  });
+}
+
+// ---------------------------
+// Inventory Section (Add New Item)
+// ---------------------------
+
+function addNewMenuItem(event) {
+  event.preventDefault();
+  if (currentUser.role !== 'admin') {
+    alert('Permission denied');
+    return;
+  }
+  const name = document.getElementById('newItemName').value.trim();
+  const price = parseFloat(document.getElementById('newItemPrice').value);
+  const stock = parseInt(document.getElementById('newItemStock').value);
+  const active = document.getElementById('newItemActive').checked;
+
+  if (!name || isNaN(price) || price < 0 || isNaN(stock) || stock < 0) {
+    alert('Fill all fields with valid values');
+    return;
+  }
+
+  const newId = menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1;
+  menu.push({ id: newId, name, price, stock, active });
+  saveData();
+  renderInventoryList();
+  renderMenuList();
+  populateAddItemSelect();
+
+  document.getElementById('addMenuItemForm').reset();
+  alert('New item added');
+}
+
+function renderInventoryList() {
+  const ul = document.getElementById('inventoryList');
+  ul.innerHTML = '';
+  menu.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'inventory-item';
+    li.innerHTML = `
+      <b>${item.name}</b> |
+      Price: $${item.price.toFixed(2)} |
+      Stock: <span class="${item.stock <= 3 ? 'low-stock' : ''}">${item.stock}</span> |
+      ${item.active ? 'Active' : 'Inactive'}
+    `;
+    ul.appendChild(li);
+  });
+}
+
+// ---------------------------
+// Order Section
+// ---------------------------
+
+let currentOrderItems = [];
+
+function populateAddItemSelect() {
+  const select = document.getElementById('addItemSelect');
+  select.innerHTML = '';
+  menu.filter(i => i.active && i.stock > 0).forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.id;
+    opt.textContent = `${item.name} ($${item.price.toFixed(2)} | Stock: ${item.stock})`;
+    select.appendChild(opt);
+  });
+}
+
+function addSelectedItemToOrder() {
+  const select = document.getElementById('addItemSelect');
+  const itemId = parseInt(select.value);
+  if (!itemId) return;
+  const menuItem = menu.find(i => i.id === itemId);
+  if (!menuItem) return;
+  if (menuItem.stock <= 0) {
+    alert(`Item "${menuItem.name}" is out of stock.`);
+    return;
+  }
+
+  const existing = currentOrderItems.find(i => i.id === itemId);
+  if (existing) {
+    if (existing.quantity < menuItem.stock) existing.quantity++;
+    else {
+      alert(`Maximum available stock reached for ${menuItem.name}`);
+      return;
     }
+  } else {
+    currentOrderItems.push({ ...menuItem, quantity: 1 });
+  }
+  renderCurrentOrderItems();
+}
 
-    function updateStatsAndTable() {
-      const tbody = document.querySelector("#tradeTable tbody");
-      tbody.innerHTML = "";
-      let wins = 0, losses = 0, equity = 0, curve = [];
-      trades.forEach((tr, index) => {
-        equity += tr.pnl;
-        curve.push(equity);
-        let headers = [
-          "Date/Time", "Ticker", "Side", "Entry", "Exit", "Qty", "P/L",
-          "Context", "Notes", "Actions"
-        ];
-        let cells = [
-          tr.date,
-          tr.ticker,
-          tr.side,
-          tr.entry,
-          tr.exit,
-          tr.qty,
-          `<span style="color:${tr.pnl >= 0 ? '#27ae60' : '#e74c3c'}">${tr.pnl.toFixed(2)}</span>`,
-          tr.context || "",
-          tr.notes || "",
-          `<button class='delete-btn' data-index='${index}'>Delete</button>`
-        ];
-        let row = '<tr>';
-        cells.forEach((cell, i) => {
-          row += `<td data-label="${headers[i]}">${cell}</td>`;
-        });
-        row += '</tr>';
-        tbody.insertAdjacentHTML("beforeend", row);
-        if (tr.pnl > 0) wins++;
-        else if (tr.pnl < 0) losses++;
-      });
-      let stats = `Total trades: ${trades.length} | Wins: ${wins} | Losses: ${losses} | NET: <b>${equity.toFixed(2)}</b>`;
-      document.getElementById("stats").innerHTML = stats;
+function renderCurrentOrderItems() {
+  const ul = document.getElementById('orderItemsList');
+  ul.innerHTML = '';
+  if (currentOrderItems.length === 0) {
+    ul.innerHTML = '<li>No items added to order.</li>';
+    updateOrderTotal();
+    return;
+  }
+  currentOrderItems.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'order-item';
+    li.innerHTML = `
+      <span>${item.name} - $${item.price.toFixed(2)} × ${item.quantity}</span>
+      <button aria-label="Remove one ${item.name} from order" onclick="removeOneFromOrder(${item.id})">Remove</button>
+    `;
+    ul.appendChild(li);
+  });
+  updateOrderTotal();
+}
 
-      // Draw a smooth equity curve
-      const ctx = document.getElementById('equityChart').getContext('2d');
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+function removeOneFromOrder(id) {
+  const index = currentOrderItems.findIndex(i => i.id === id);
+  if (index >= 0) {
+    if (currentOrderItems[index].quantity > 1) {
+      currentOrderItems[index].quantity--;
+    } else {
+      currentOrderItems.splice(index, 1);
+    }
+    renderCurrentOrderItems();
+  }
+}
 
-      if(curve.length > 0) {
-        const w = ctx.canvas.width, h = ctx.canvas.height;
-        const maxEquity = Math.max(...curve);
-        const minEquity = Math.min(...curve);
-        const range = maxEquity - minEquity || 1;
+function updateOrderTotal() {
+  const total = currentOrderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  document.getElementById('orderTotal').textContent = total.toFixed(2);
+}
 
-        ctx.beginPath();
-        ctx.strokeStyle = '#2980b9';
-        ctx.lineWidth = 3;
+function toggleDeliveryAddress() {
+  const orderType = document.getElementById('orderType').value;
+  const delDiv = document.getElementById('deliveryAddressDiv');
+  if (orderType === 'delivery') {
+    delDiv.style.display = 'block';
+    document.getElementById('deliveryAddress').setAttribute('required', 'required');
+  } else {
+    delDiv.style.display = 'none';
+    document.getElementById('deliveryAddress').removeAttribute('required');
+  }
+}
 
-        function smoothCurve(points) {
-          ctx.moveTo(0, h - (points[0] - minEquity) / range * h);
-          for (let i = 1; i < points.length; i++) {
-            const x = i * w / (points.length - 1);
-            const y = h - (points[i] - minEquity) / range * h;
-            ctx.lineTo(x, y);
-          }
-        }
-        smoothCurve(curve);
-        ctx.stroke();
+function clearOrderInput() {
+  document.getElementById('custName').value = '';
+  document.getElementById('custPhone').value = '';
+  document.getElementById('orderType').value = 'dine-in';
+  toggleDeliveryAddress();
+  currentOrderItems = [];
+  renderCurrentOrderItems();
+}
+
+// ---------------------------
+// Payment and Orders
+// ---------------------------
+
+function payOrder() {
+  if (currentOrderItems.length === 0) {
+    alert('Add items to the order before payment.');
+    return;
+  }
+  const custName = document.getElementById('custName').value.trim();
+  const custPhone = document.getElementById('custPhone').value.trim();
+  const orderType = document.getElementById('orderType').value;
+  const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+
+  if (!custName || !custPhone) {
+    alert('Please provide customer name and mobile number.');
+    return;
+  }
+
+  if (orderType === 'delivery' && !deliveryAddress) {
+    alert('Delivery address is required for delivery orders.');
+    return;
+  }
+
+  for (const item of currentOrderItems) {
+    const menuItem = menu.find(m => m.id === item.id);
+    if (!menuItem || menuItem.stock < item.quantity) {
+      alert(`Insufficient stock for item: ${item.name}`);
+      return;
+    }
+  }
+
+  // Deduct stock
+  currentOrderItems.forEach(item => {
+    const menuItem = menu.find(m => m.id === item.id);
+    if (menuItem) menuItem.stock -= item.quantity;
+  });
+  saveData();
+  renderInventoryList();
+  renderMenuList();
+  populateAddItemSelect();
+
+  // Create new order
+  const orderObj = {
+    id: generateOrderId(),
+    customerName: custName,
+    customerPhone: custPhone,
+    orderType,
+    deliveryAddress: orderType === 'delivery' ? deliveryAddress : '',
+    items: currentOrderItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+    total: currentOrderItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    placedAt: new Date().toISOString(),
+    status: 'not-ready',
+  };
+  orders.push(orderObj);
+  saveData();
+
+  alert(`Order #${orderObj.id} placed successfully.`);
+
+  clearOrderInput();
+  renderKitchenTickets();
+  renderCompletedOrders();
+  renderReports();
+  showSection('kitchenSection');
+}
+
+// ---------------------------
+// Kitchen Section
+// ---------------------------
+
+function renderKitchenTickets() {
+  const container = document.getElementById('kitchenTicketsList');
+  container.innerHTML = '';
+  const filterVal = document.getElementById('orderFilter') ? document.getElementById('orderFilter').value : 'not-ready';
+  let filteredOrders = orders.filter(o => o.status !== 'ready');
+  if (filterVal === 'not-ready') filteredOrders = orders.filter(o => o.status !== 'ready');
+  else filteredOrders = orders; // all
+
+  filteredOrders = filteredOrders.filter(o => o.status !== 'ready');
+
+  if (filteredOrders.length === 0) {
+    container.innerHTML = '<p>No pending orders.</p>';
+    return;
+  }
+  filteredOrders.forEach(order => {
+    const div = document.createElement('div');
+    div.className = 'kitchen-ticket';
+    const dateStr = new Date(order.placedAt).toLocaleString();
+    div.innerHTML = `
+      <p><strong>Order #${order.id}</strong> (Placed: ${dateStr})<br>
+      Customer: ${order.customerName} | Phone: ${order.customerPhone}<br>
+      Order Type: ${order.orderType}${order.orderType === 'delivery' ? '<br>Delivery Address: ' + order.deliveryAddress : ''}</p>
+      <p><strong>Items:</strong><br>${order.items.map(i => `${i.name} × ${i.quantity}`).join('<br>')}</p>
+      <p><strong>Total: $${order.total.toFixed(2)}</strong></p>
+      <p>Status: <strong><span style="color:red;">Not ready</span></strong></p>
+    `;
+
+    if (currentUser.role === 'kitchen' || currentUser.role === 'admin') {
+      if (order.status !== 'ready') {
+        const readyBtn = document.createElement('button');
+        readyBtn.textContent = 'Mark Ready';
+        readyBtn.className = 'ready-btn';
+        readyBtn.onclick = () => {
+          markOrderReady(order.id);
+        };
+        div.appendChild(readyBtn);
       }
     }
 
-    // Add trade
-    document.getElementById("tradeForm").onsubmit = function(e) {
-      e.preventDefault();
-      let f = e.target.elements;
-      let entry = Number(f.entry.value), exit = Number(f.exit.value), qty = Number(f.qty.value);
-      let pnl = (f.side.value === "Buy" ? (exit - entry) : (entry - exit)) * qty;
+    container.appendChild(div);
+  });
+}
 
-      trades.push({
-        date: f.date.value, ticker: f.ticker.value.toUpperCase(), side: f.side.value,
-        entry, exit, qty, pnl,
-        context: f.context.value, notes: f.notes.value
-      });
-      saveTrades();
-      updateStatsAndTable();
-      e.target.reset();
-    };
+function markOrderReady(orderId) {
+  const order = orders.find(o => o.id === orderId);
+  if (order) {
+    order.status = 'ready';
+    order.completedAt = new Date().toISOString();
+    saveData();
+    renderKitchenTickets();
+    renderCompletedOrders();
+    renderReports();
+    alert(`Order #${orderId} marked as Ready and moved to Completed Orders.`);
+  }
+}
 
-    // Delete trade
-    document.querySelector("#tradeTable tbody").addEventListener("click", function(e) {
-      if(e.target.classList.contains("delete-btn")) {
-        const idx = e.target.getAttribute("data-index");
-        trades.splice(idx, 1);
-        saveTrades();
-        updateStatsAndTable();
-      }
+// ---------------------------
+// Completed Orders Section
+// ---------------------------
+
+function renderCompletedOrders() {
+  const container = document.getElementById('completedOrdersList');
+  container.innerHTML = '';
+  const completedOrders = orders.filter(o => o.status === 'ready');
+  if (completedOrders.length === 0) {
+    container.innerHTML = '<p>No completed orders.</p>';
+    return;
+  }
+  completedOrders.forEach(order => {
+    const div = document.createElement('div');
+    div.className = 'kitchen-ticket';
+    const placedStr = new Date(order.placedAt).toLocaleString();
+    const completedStr = order.completedAt ? new Date(order.completedAt).toLocaleString() : 'N/A';
+    div.innerHTML = `
+      <p><strong>Order #${order.id}</strong> (Placed: ${placedStr})<br>
+      Completed: ${completedStr}<br>
+      Customer: ${order.customerName} | Phone: ${order.customerPhone}<br>
+      Order Type: ${order.orderType}${order.orderType === 'delivery' ? '<br>Delivery Address: ' + order.deliveryAddress : ''}</p>
+      <p><strong>Items:</strong><br>${order.items.map(i => `${i.name} × ${i.quantity}`).join('<br>')}</p>
+      <p><strong>Total: $${order.total.toFixed(2)}</strong></p>
+      <p>Status: <strong style="color:green;">Ready ✔</strong></p>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function clearCompletedOrders() {
+  if (!confirm('Are you sure you want to clear all completed orders? This action cannot be undone.')) return;
+  orders = orders.filter(o => o.status !== 'ready');
+  saveData();
+  renderCompletedOrders();
+  alert('All completed orders cleared.');
+}
+
+// ---------------------------
+// Sales Reports Section
+// ---------------------------
+
+function renderReports() {
+  const repDiv = document.getElementById('reportContent');
+  const todayStr = new Date().toISOString().slice(0,10);
+  const todaysOrders = orders.filter(o => o.placedAt.slice(0,10) === todayStr);
+  if (todaysOrders.length === 0) {
+    repDiv.innerHTML = '<p>No orders today.</p>';
+    return;
+  }
+
+  let totalSales = 0;
+  const itemCountMap = {};
+  todaysOrders.forEach(o => {
+    totalSales += o.total;
+    o.items.forEach(i => {
+      itemCountMap[i.name] = (itemCountMap[i.name] || 0) + i.quantity;
     });
+  });
 
-    updateStatsAndTable();
-  </script>
+  const topItems = Object.entries(itemCountMap).sort((a,b) => b[1]-a[1]);
+
+  let html = `<p>Total Sales: <strong>$${totalSales.toFixed(2)}</strong></p>`;
+  html += '<p>Top Selling Items:</p><ul>';
+  topItems.forEach(([name, qty]) => {
+    html += `<li>${name}: ${qty} sold</li>`;
+  });
+  html += '</ul>';
+
+  repDiv.innerHTML = html;
+}
+
+function exportReportCSV() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const todaysOrders = orders.filter(o => o.placedAt.slice(0,10) === todayStr);
+  if (todaysOrders.length === 0) {
+    alert('No sales to export for today.');
+    return;
+  }
+
+  let csv = 'Order ID,Customer,Phone,Order Type,Item,Quantity,Price,Total,Status,Placed At\n';
+
+  todaysOrders.forEach(o => {
+    o.items.forEach(i => {
+      csv += [
+        o.id,
+        `"${o.customerName}"`,
+        o.customerPhone,
+        o.orderType,
+        `"${i.name}"`,
+        i.quantity,
+        i.price.toFixed(2),
+        o.total.toFixed(2),
+        o.status,
+        new Date(o.placedAt).toLocaleString()
+      ].join(',') + '\n';
+    });
+  });
+
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sales_report_${todayStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---------------------------
+// Print Bill
+// ---------------------------
+
+function printBill() {
+  if (currentOrderItems.length === 0) {
+    alert('No order to print.');
+    return;
+  }
+  const custName = document.getElementById('custName').value.trim();
+  const custPhone = document.getElementById('custPhone').value.trim();
+  const orderType = document.getElementById('orderType').value;
+  const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+
+  if (!custName || !custPhone) {
+    alert('Please enter customer name and phone before printing.');
+    return;
+  }
+  if (orderType === 'delivery' && !deliveryAddress) {
+    alert('Delivery address is required for delivery order.');
+    return;
+  }
+
+  let html = `<h2>Pizza & Fast Food Shop POS</h2>`;
+  html += `<p><strong>Customer:</strong> ${custName}<br><strong>Phone:</strong> ${custPhone}<br>`;
+  html += `<strong>Order Type:</strong> ${orderType}`;
+  if (orderType === 'delivery') html += `<br><strong>Delivery Address:</strong> ${deliveryAddress}`;
+  html += `</p><hr><p><strong>Items:</strong></p><ul>`;
+  currentOrderItems.forEach(i => {
+    html += `<li>${i.name} × ${i.quantity} - $${(i.price * i.quantity).toFixed(2)}</li>`;
+  });
+  html += `</ul><p><strong>Total:</strong> $${currentOrderItems.reduce((sum,i)=>sum+i.price*i.quantity,0).toFixed(2)}</p>`;
+  html += `<hr><p><small>Printed on ${new Date().toLocaleString()}</small></p>`;
+
+  const newWindow = window.open();
+  newWindow.document.write(`<html><head><title>Bill</title></head><body>${html}</body></html>`);
+  newWindow.document.close();
+  newWindow.focus();
+  newWindow.print();
+  newWindow.close();
+}
+
+// ---------------------------
+// Initialization
+// ---------------------------
+
+loadData();
+
+</script>
+
 </body>
 </html>
